@@ -99,9 +99,9 @@ for cur_type in l_death_types:
     ax.plot(df_result_oriented[cur_type])
     ax.set_xlim(df_result.shape[0], 0)
     ax.grid(True)
-    ax.set(title=cur_type, xlabel="Time [days]", ylabel="Deaths")
+    ax.set(title=' '.join([country, cur_type]), xlabel="Time [days]", ylabel="Deaths")
 #    ax.set_xticklabels(l_days)
-    plt.savefig( cur_type+"_Deaths.png" )
+    plt.savefig( '_'.join([country,cur_type,"Deaths.png"]) )
 
 
 
