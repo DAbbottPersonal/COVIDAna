@@ -29,6 +29,9 @@ def organize_frame ( country='US', day='today', by = "" ):
     frames['economy']['GVA'] = pd.read_csv("../data/GVAData.csv", encoding = "ISO-8859-1")
     frames['economy']['GVA'] = frames['economy']['GVA'][frames['economy']['GVA']['country'] == UN_name]
 
+    # Get Eductation information about the country.
+    frames['education'] = pd.read_csv("../data/EducationData.csv", encoding = "ISO-8859-1")
+    frames['education'] = frames['education'][frames['education']['country'] == UN_name]
 
     if by == "country": 
         frames["COVID"] = frames["COVID"].drop(columns = ["FIPS", "Last_Update", "Admin2", "Province_State", "Combined_Key" ])
@@ -41,6 +44,7 @@ def organize_frame ( country='US', day='today', by = "" ):
         frames["COVID"] = append_populations(frames["COVID"], frames["general"])
         frames["COVID"] = append_date(frames["COVID"],date)
         frames["COVID"] = append_eco(frames["COVID"], frames["economy"])
+        frames["COVID"] = append_edu(frames["COVID"], frames["education"])
 
 # State by-state is going to takes some more sensitive care with population. A WIP.
     if by == "state":
@@ -62,6 +66,7 @@ def organize_frame ( country='US', day='today', by = "" ):
             frames["states"][cur_state] = append_populations(frames["states"][cur_state], frames["general"])
             frames["states"][cur_state] = append_date(frames["states"][cur_state], date)
             frames["states"][cur_state] = append_eco(frames["states"][cur_state], frames["economy"])
+            frames["states"][cur_state] = append_edu(frames["states"][cur_state], frames["education"])
             #frames["states"][cur_state] = append_location(frames["states"][cur_state],
 
         frames["COVID"] = pd.DataFrame(frames["states"])
@@ -103,7 +108,14 @@ def date_as_date ( day = "today" ):
         return None
     t_date = date.today()-timedelta(days=day)
     return t_date
- 
+
+# Handle missing data -- return np.nan 
+def check_frame( frame ):
+    if frame.empty:
+        print ("Frame is empty :: " + frame.name)
+        print ("Will be filled with NaN")
+        return np.nan
+    return frame.iloc[0]
     
 def append_populations( covid_frame, pop_frame ):
     PU = 1E3 # population units are in thousands
@@ -121,14 +133,48 @@ def append_date( frame, date ):
 def append_eco( frame, economy ): 
     latest_eco = economy["GDP"][ economy["GDP"]["series"] == "GDP per capita (US dollars)"]
     latest_eco = latest_eco[ latest_eco["year"] == latest_eco["year"].max()]
-    frame["GDP"] = latest_eco["value"].iloc[0]
+    frame["GDP"] = check_frame( latest_eco["value"] )
 
     latest_eco = economy["GVA"][ economy["GVA"]["year"] == economy["GVA"]["year"].max()]
     agriculture = latest_eco[ latest_eco["series"] == "Agriculture, hunting, forestry and fishing (% of gross value added)"]
-    frame["argiculture"] = agriculture["value"].iloc[0]
+    frame["argiculture"] = check_frame( agriculture["value"] )
     industry = latest_eco[ latest_eco["series"] == "Industry (% of gross value added)"]
-    frame["industry"] = industry["value"].iloc[0]
+    frame["industry"] = check_frame( industry["value"] )
     services = latest_eco[ latest_eco["series"] == "Services (% of gross value added)"]
-    frame["services"] = services["value"].iloc[0]
+    frame["services"] = check_frame( services["value"] )
 
     return frame
+
+
+# NOTE: The male col has a typo of "enrollement" -- perhaps a french typo? :D
+def append_edu( frame, education ): 
+    latest_edu = education[ education["year"] == education["year"].max()]
+    prim_enroll_fem  = latest_edu[ latest_edu["series"] == "Gross enrollment ratio - Primary (female)"]
+    frame["prim_edu_fem"] = check_frame( prim_enroll_fem["value"] )
+    prim_enroll_male = latest_edu[ latest_edu["series"] == "Gross enrollement ratio - Primary (male)"]
+    frame["prim_edu_male"] = check_frame( prim_enroll_male["value"] )
+
+    seco_enroll_fem  = latest_edu[ latest_edu["series"] == "Gross enrollment ratio - Secondary (female)"]
+    frame["seco_edu_fem"] = check_frame( seco_enroll_fem["value"] )
+    seco_enroll_male = latest_edu[ latest_edu["series"] == "Gross enrollment ratio - Secondary (male)"]
+    frame["seco_edu_male"] = check_frame( seco_enroll_male["value"] )
+  
+    tert_enroll_fem  = latest_edu[ latest_edu["series"] == "Gross enrollment ratio - Tertiary (female)"]
+    frame["tert_edu_fem"] = check_frame( tert_enroll_fem["value"] )
+    tert_enroll_male = latest_edu[ latest_edu["series"] == "Gross enrollment ratio - Tertiary (male)"]
+    frame["tert_edu_male"] = check_frame( tert_enroll_male["value"] )
+
+
+    return frame
+
+
+
+
+
+
+
+
+
+
+
+

@@ -10,3 +10,7 @@ print (frame)
 frame = organize_frame("France", 3, by="country")
 print (frame)
 
+frame = organize_frame("China", 3, by="country")
+print (frame)
+
+
