@@ -23,9 +23,12 @@ def organize_frame ( country='US', day='today', by = "" ):
 
     # Get economy information about the country.
     frames['economy'] = {}
-    frames['economy']['GDP'] = pd.read_csv("../data/GVAData.csv")
-    print ( frames['economy']['GDP'].head() )
-    frames['economy']['GDP'] = frames['economy']['GDP'][frames['economy']['GDP']['Country'] == UN_name]
+    frames['economy']['GDP'] = pd.read_csv("../data/GDPData.csv", encoding = "ISO-8859-1")
+    frames['economy']['GDP'] = frames['economy']['GDP'][frames['economy']['GDP']['country'] == UN_name]
+
+    frames['economy']['GVA'] = pd.read_csv("../data/GVAData.csv", encoding = "ISO-8859-1")
+    frames['economy']['GVA'] = frames['economy']['GVA'][frames['economy']['GVA']['country'] == UN_name]
+
 
     if by == "country": 
         frames["COVID"] = frames["COVID"].drop(columns = ["FIPS", "Last_Update", "Admin2", "Province_State", "Combined_Key" ])
@@ -37,6 +40,7 @@ def organize_frame ( country='US', day='today', by = "" ):
         frames["COVID"] = frames["COVID"].append(location)
         frames["COVID"] = append_populations(frames["COVID"], frames["general"])
         frames["COVID"] = append_date(frames["COVID"],date)
+        frames["COVID"] = append_eco(frames["COVID"], frames["economy"])
 
 # State by-state is going to takes some more sensitive care with population. A WIP.
     if by == "state":
@@ -57,6 +61,7 @@ def organize_frame ( country='US', day='today', by = "" ):
             frames["states"][cur_state] = frames["states"][cur_state].append(location)
             frames["states"][cur_state] = append_populations(frames["states"][cur_state], frames["general"])
             frames["states"][cur_state] = append_date(frames["states"][cur_state], date)
+            frames["states"][cur_state] = append_eco(frames["states"][cur_state], frames["economy"])
             #frames["states"][cur_state] = append_location(frames["states"][cur_state],
 
         frames["COVID"] = pd.DataFrame(frames["states"])
@@ -113,3 +118,17 @@ def append_date( frame, date ):
 
     return frame
 
+def append_eco( frame, economy ): 
+    latest_eco = economy["GDP"][ economy["GDP"]["series"] == "GDP per capita (US dollars)"]
+    latest_eco = latest_eco[ latest_eco["year"] == latest_eco["year"].max()]
+    frame["GDP"] = latest_eco["value"].iloc[0]
+
+    latest_eco = economy["GVA"][ economy["GVA"]["year"] == economy["GVA"]["year"].max()]
+    agriculture = latest_eco[ latest_eco["series"] == "Agriculture, hunting, forestry and fishing (% of gross value added)"]
+    frame["argiculture"] = agriculture["value"].iloc[0]
+    industry = latest_eco[ latest_eco["series"] == "Industry (% of gross value added)"]
+    frame["industry"] = industry["value"].iloc[0]
+    services = latest_eco[ latest_eco["series"] == "Services (% of gross value added)"]
+    frame["services"] = services["value"].iloc[0]
+
+    return frame
