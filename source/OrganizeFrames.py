@@ -5,7 +5,7 @@ import pandas as pd
 from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
 
-def organize_frame ( country='US', day='latest', by = "" ):
+def organize_frame ( country='US', day='today', by = "" ):
     data_path = '../data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/'
     cov_dates = set(os.listdir(data_path))
     latest_date = find_latest_date(cov_dates)
@@ -25,7 +25,6 @@ def organize_frame ( country='US', day='latest', by = "" ):
     frames = {}
     frames["COVID"] = pd.read_csv(''.join([data_path, doi,'.csv']))
     frames["COVID"] = frames["COVID"][frames["COVID"]['Country_Region'] == country]
-
     # Get general information about the country.
     UN_name = convert_UN_name(country)
     frames["general"] = pd.read_csv("../data/CountryData.csv")
@@ -169,11 +168,11 @@ def append_date( frame, date ):
 def append_eco( frame, economy ): 
     latest_eco = economy["GDP"][ economy["GDP"]["series"] == "GDP per capita (US dollars)"]
     latest_eco = latest_eco[ latest_eco["year"] == latest_eco["year"].max()]
-    frame["GDP"] = check_frame( latest_eco["value"] )
-
+    frame["GDP"] = check_frame( latest_eco["value"] ).replace(',', '')
+    
     latest_eco = economy["GVA"][ economy["GVA"]["year"] == economy["GVA"]["year"].max()]
     agriculture = latest_eco[ latest_eco["series"] == "Agriculture, hunting, forestry and fishing (% of gross value added)"]
-    frame["argiculture"] = check_frame( agriculture["value"] )
+    frame["agriculture"] = check_frame( agriculture["value"] )
     industry = latest_eco[ latest_eco["series"] == "Industry (% of gross value added)"]
     frame["industry"] = check_frame( industry["value"] )
     services = latest_eco[ latest_eco["series"] == "Services (% of gross value added)"]
