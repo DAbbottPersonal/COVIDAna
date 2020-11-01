@@ -5,22 +5,34 @@ import pandas as pd
 from datetime import date, datetime, timedelta
 import matplotlib.pyplot as plt
 
-def organize_frame ( country='US', day='today', by = "" ):
+def organize_frame ( country='US', day='latest', by = "" ):
     data_path = '../data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/'
+    cov_dates = set(os.listdir(data_path))
+    latest_date = find_latest_date(cov_dates)
+    days_behind = date.today() - latest_date 
+    doi = None # Short for date of interest!
+    yoi = None
+    if days_behind.days >= 7:
+        print ("WARNING: COVID data is older than a week. Please update from the repository!")
+    if day == "latest":
+        doi = date_as_str(days_behind.days)
+    else: 
+        doi = date_as_str(day)
+    yoi = doi.split("-")[2]
+
     PU = 1E3 # population units are in thousands
-    date = date_as_str(day)
+    # Get COVID information about the country.
+    frames = {}
+    frames["COVID"] = pd.read_csv(''.join([data_path, doi,'.csv']))
+    frames["COVID"] = frames["COVID"][frames["COVID"]['Country_Region'] == country]
 
     # Get general information about the country.
     UN_name = convert_UN_name(country)
-    frames = {}
     frames["general"] = pd.read_csv("../data/CountryData.csv")
     frames["general"] = frames["general"][frames["general"]["Location"] == UN_name]
-    frames["general"] = frames["general"][frames["general"]["Time"] == date_as_date(day).year]
+    if day == "latest":
+        frames["general"] = frames["general"][frames["general"]["Time"] == int(yoi)]
     
-    # Get COVID information about the country.
-    frames["COVID"] = pd.read_csv(''.join([data_path, date,'.csv']))
-    frames["COVID"] = frames["COVID"][frames["COVID"]['Country_Region'] == country]
-
     # Get economy information about the country.
     frames['economy'] = {}
     frames['economy']['GDP'] = pd.read_csv("../data/GDPData.csv", encoding = "ISO-8859-1")
@@ -42,7 +54,7 @@ def organize_frame ( country='US', day='today', by = "" ):
         frames["COVID"]["Country_Region"] = country
         frames["COVID"] = frames["COVID"].append(location)
         frames["COVID"] = append_populations(frames["COVID"], frames["general"])
-        frames["COVID"] = append_date(frames["COVID"],date)
+        frames["COVID"] = append_date(frames["COVID"],doi)
         frames["COVID"] = append_eco(frames["COVID"], frames["economy"])
         frames["COVID"] = append_edu(frames["COVID"], frames["education"])
 
@@ -64,7 +76,7 @@ def organize_frame ( country='US', day='today', by = "" ):
             frames["states"][cur_state]["Country_Region"] = country
             frames["states"][cur_state] = frames["states"][cur_state].append(location)
             frames["states"][cur_state] = append_populations(frames["states"][cur_state], frames["general"])
-            frames["states"][cur_state] = append_date(frames["states"][cur_state], date)
+            frames["states"][cur_state] = append_date(frames["states"][cur_state], doi)
             frames["states"][cur_state] = append_eco(frames["states"][cur_state], frames["economy"])
             frames["states"][cur_state] = append_edu(frames["states"][cur_state], frames["education"])
             #frames["states"][cur_state] = append_location(frames["states"][cur_state],
@@ -108,6 +120,30 @@ def date_as_date ( day = "today" ):
         return None
     t_date = date.today()-timedelta(days=day)
     return t_date
+
+def find_latest_date ( dates ):
+    max_year  = 1900
+    max_day   = -99
+    max_month = -99
+    for d in dates:
+        d = d.strip(".csv")
+        d = d.split("-")
+        if len(d) < 2: continue
+        if int(d[2]) > max_year: max_year = int(d[2])
+
+    for d in dates:
+        d = d.strip(".csv")
+        d = d.split("-")
+        if len(d) < 2: continue
+        if int(d[0]) > max_month: max_month = int(d[0])
+
+    for d in dates:
+        d = d.strip(".csv")
+        d = d.split("-")
+        if len(d) < 2: continue
+        if int(d[1]) > max_day: max_day = int(d[1])
+
+    return date(max_year, max_month, max_day)
 
 # Handle missing data -- return np.nan 
 def check_frame( frame ):
