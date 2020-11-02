@@ -1,5 +1,7 @@
 import requests
 
+from os import getenv
+
 def clean_lines( csv ):
     lines = list(csv.iter_lines())
     lines.pop(0)
@@ -10,10 +12,12 @@ def clean_lines( csv ):
 
     return lines_w_newline
 
+print ("Updating economy repos.")
 dls = "https://data.un.org/_Docs/SYB/CSV/SYB62_230_201904_GDP%20and%20GDP%20Per%20Capita.csv" 
 csv = requests.get(dls)
 
-f = open("../data/GDPData.csv", 'wb')
+repo_dir = getenv('DABBOTTCOVID')
+f = open(repo_dir+"/data/GDPData.csv", 'wb')
 clean_csv = clean_lines(csv)
 f.writelines(clean_csv)
 f.close()
@@ -21,10 +25,9 @@ f.close()
 dls = "https://data.un.org/_Docs/SYB/CSV/SYB62_153_201906_Gross%20Value%20Added%20by%20Economic%20Activity.csv" 
 csv = requests.get(dls)
 
-f = open("../data/GVAData.csv", 'wb')
+f = open(repo_dir+"/data/GVAData.csv", 'wb')
 clean_csv = clean_lines(csv)
 f.writelines(clean_csv)
 f.close()
 
-
-
+print ("Done.")

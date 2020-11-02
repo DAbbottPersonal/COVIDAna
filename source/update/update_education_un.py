@@ -1,5 +1,7 @@
 import requests
 
+from os import getenv
+
 def clean_lines( csv ):
     lines = list(csv.iter_lines())
     lines.pop(0)
@@ -10,11 +12,13 @@ def clean_lines( csv ):
 
     return lines_w_newline
 
+print ("Updating education repos.")
 dls = "https://data.un.org/_Docs/SYB/CSV/SYB62_309_201906_Education.csv" 
 csv = requests.get(dls)
 
-f = open("../data/EducationData.csv", 'wb')
+repo_dir = getenv('DABBOTTCOVID')
+f = open(repo_dir+"/data/EducationData.csv", 'wb')
 clean_csv = clean_lines(csv)
 f.writelines(clean_csv)
 f.close()
-
+print ("Done.")
