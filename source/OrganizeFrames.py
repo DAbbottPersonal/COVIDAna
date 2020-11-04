@@ -128,19 +128,22 @@ def find_latest_date ( dates ):
         d = d.strip(".csv")
         d = d.split("-")
         if len(d) < 2: continue
-        if int(d[2]) > max_year: max_year = int(d[2])
+        if int(d[2]) > max_year: 
+            max_year = int(d[2])
 
     for d in dates:
         d = d.strip(".csv")
         d = d.split("-")
         if len(d) < 2: continue
-        if int(d[0]) > max_month: max_month = int(d[0])
+        if int(d[0]) > max_month and int(d[2]) == max_year: 
+            max_month = int(d[0])
 
     for d in dates:
         d = d.strip(".csv")
         d = d.split("-")
         if len(d) < 2: continue
-        if int(d[1]) > max_day: max_day = int(d[1])
+        if int(d[1]) > max_day and int(d[0]) == max_month and int(d[2]) == max_year: 
+            max_day = int(d[1])
 
     return date(max_year, max_month, max_day)
 
