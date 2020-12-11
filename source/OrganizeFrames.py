@@ -86,6 +86,69 @@ def organize_frame ( country='US', day='today', by = "" ):
 
     return frames["COVID"]
 
+def organize_covid_frame( country='US', day='today', by = "" ):
+    data_path = '../data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/'
+    cov_dates = set(os.listdir(data_path))
+    latest_date = find_latest_date(cov_dates)
+    days_behind = date.today() - latest_date 
+    doi = None # Short for date of interest!
+    yoi = None
+    if days_behind.days >= 7:
+        print ("WARNING: COVID data is older than a week. Please update from the repository!")
+    if day == "latest":
+        doi = date_as_str(days_behind.days)
+    else: 
+        doi = date_as_str(day)
+    yoi = doi.split("-")[2]
+
+    PU = 1E3 # population units are in thousands
+    # Get COVID information about the country.
+    frames = {}
+    frames["COVID"] = pd.read_csv(''.join([data_path, doi,'.csv']))
+    frames["COVID"] = frames["COVID"][frames["COVID"]['Country_Region'] == country]
+    # Get general information about the country.
+    UN_name = convert_UN_name(country)
+    frames["general"] = pd.read_csv("../data/CountryData.csv")
+    frames["general"] = frames["general"][frames["general"]["Location"] == UN_name]
+    if day == "latest":
+        frames["general"] = frames["general"][frames["general"]["Time"] == int(yoi)]
+ 
+    if by == "country": 
+        frames["COVID"] = frames["COVID"].drop(columns = ["FIPS", "Last_Update", "Admin2", "Province_State", "Combined_Key" ])
+        location = frames["COVID"][["Lat", "Long_"]]
+        frames["COVID"] = frames["COVID"].drop(columns = ["Lat", "Long_"])
+        frames["COVID"] = frames["COVID"].agg("sum")
+        location = location.agg("mean")
+        frames["COVID"]["Country_Region"] = country
+        frames["COVID"] = frames["COVID"].append(location)
+        frames["COVID"] = append_populations(frames["COVID"], frames["general"])
+        
+# State by-state is going to takes some more sensitive care with population. A WIP.
+    if by == "state":
+        frames["COVID"] = frames["COVID"].drop(columns = ["FIPS", "Last_Update", "Admin2", "Combined_Key" ])
+        frames["states"] = {}
+        for cur_state in frames["COVID"]["Province_State"]:
+            
+            frames["states"][cur_state] = frames["COVID"][frames["COVID"]["Province_State"]==cur_state]
+            location = frames["states"][cur_state][["Lat", "Long_" ]]
+            frames["states"][cur_state] = frames["states"][cur_state].drop(columns = ["Lat", "Long_"])
+
+            frames["states"][cur_state] = frames["states"][cur_state].agg("sum")
+            location = location.agg("mean")
+
+            
+            frames["states"][cur_state]["Province_State"] = cur_state
+            frames["states"][cur_state]["Country_Region"] = country
+            frames["states"][cur_state] = frames["states"][cur_state].append(location)
+            frames["states"][cur_state] = append_populations(frames["states"][cur_state], frames["general"])
+           
+        frames["COVID"] = pd.DataFrame(frames["states"])
+    else:
+        frames["COVID"].rename(index={0:country})
+
+    return frames["COVID"]
+
+
 # To handle country names that are spelled unique.
 def convert_UN_name( country ):
     d_un_names = {"US":"United States of America",
