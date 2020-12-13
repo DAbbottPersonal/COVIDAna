@@ -15,10 +15,8 @@ def rebin( graph, scale ):
         return 0
     x, y = [], []
     for cur_bin in range(0,len(graph)-scale+1, scale):
-        #print (cur_bin)
         ave_x = cur_bin+scale/2
         x.append(ave_x)
-        print (ave_x)
         ave_y = 0
         for y_iter in range(cur_bin, cur_bin+scale+1):
             ave_y += graph[y_iter]
@@ -26,7 +24,6 @@ def rebin( graph, scale ):
         y.append( graph[cur_bin])
 
     return [x,y]
-do_smooth=False
 
 # Take in your desired input directory and output name
 parser = argparse.ArgumentParser(description='Read out death rates due to covid19.')
@@ -84,22 +81,13 @@ else:
 for cur_type in death_types:
     fig = plt.figure()
     ax  = fig.add_subplot(111)
-    reb_result = rebin(frame_result_oriented[cur_type], 7)
+    rebin_factor = int(args.time/10)
+    rebin_frame = rebin(frame_result_oriented[cur_type], rebin_factor)
     #ax.plot(frame_result_oriented[cur_type])
-    ax.plot(reb_result[0], reb_result[1])
+    ax.plot(rebin_frame[0], rebin_frame[1])
     ax.set_xlim(frame_result.shape[0], 0)
     ax.grid(True)
     ax.set(title=' '.join([country, cur_type]), xlabel="Time [days]", ylabel="Deaths")
-   
-    if do_smooth:
-        smooth = BSpline( range(len(frame_result_oriented[cur_type])), list(frame_result_oriented[cur_type]), 1)
-        smooth_x = range(len(frame_result_oriented[cur_type]))
-        smooth_y = []
-        for x in range(len(frame_result_oriented[cur_type])-1, -1, -1):
-            smooth_y.append( int(smooth(x)) )
-
-        ax.plot(smooth_x, smooth_y)
-
     plt.savefig( '_'.join([country,cur_type,"Deaths.png"]) )
 
 
