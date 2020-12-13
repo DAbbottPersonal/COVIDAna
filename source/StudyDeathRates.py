@@ -53,6 +53,7 @@ def plot_rates(countries_to_study, time_period, suffix=""):
     plots["DPC"].set(title='Deaths Per Capita', xlabel="Time [days]", ylabel="Deaths/Capita x1E3")
     #plots["DPC"].plot()
     plots["DPC"].figure.savefig("deaths_per_capita"+suffix)
+    plt.close()
 
     plots["deaths"] = sns.lineplot(data=frame_results["deaths"])
     plots["deaths"].set_xlim(time_period, 0)
@@ -60,7 +61,7 @@ def plot_rates(countries_to_study, time_period, suffix=""):
     plots["deaths"].set(title='Total Deaths', xlabel="Time [days]", ylabel="Deaths")
     #plots["deaths"].plot()
     plots["deaths"].figure.savefig("deaths"+suffix)
-
+    plt.close()
 
 #######################################
 ### Main code starts here #############
@@ -70,7 +71,7 @@ random_mix = ["US", "Germany", "France", "Italy", "India", "Brazil", "Japan", "C
 top_gdppc = ["Switzerland", "Ireland", "Norway", "US", "Singapore", "Denmark", "Australia", "Netherlands", "Sweden", "Austria", "Finland", "Germany"]
 friends = ["Finland", "Georgia", "Italy", "US", "Switzerland"]
 
-#plot_rates(random_mix, 180, suffix="")
-#plot_rates(top_gdppc, 180, suffix="topgdp")
+plot_rates(random_mix, 180, suffix="")
+plot_rates(top_gdppc, 180, suffix="topgdp")
 plot_rates(friends, 180, suffix="friends")
 
