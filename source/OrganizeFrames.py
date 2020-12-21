@@ -148,12 +148,42 @@ def organize_covid_frame( country='US', day='today', by = "" ):
 
     return frames["COVID"]
 
+def get_countries(population = "all", c_type = "all"):
+    frame = pd.read_csv("../data/CountryData.csv")
+    if population != "all":
+        frame = frame[ frame["PopTotal"] > population ]
+    if c_type == "all":
+        return frame["Location"].unique()
+    cleaned_frame = []
+    for country in frame["Location"].unique():
+        if ":" in country:
+            continue
+        if "(" in country and ")" in country:
+            continue
+        if "countries" in country or "region" in country.lower():
+            continue
+        if "UNICEF" in country or "WHO" in country or "NATIONS" in country or "SIDS" in country:
+            continue
+        if "World" in country:
+            continue
+        if "north" in country.lower() or "east" in country.lower() or "west" in country.lower():
+            continue
+        cleaned_frame.append( country )
+    return cleaned_frame
 
 # To handle country names that are spelled unique.
 def convert_UN_name( country ):
     d_un_names = {"US":"United States of America",
                   "Palestine":"State of Palestine",
-                  "Iran":"Iran (Islamic Republic of)"}
+                  "Iran":"Iran (Islamic Republic of)",
+                  "Cote d'Ivoire": "Côte d'Ivoire",
+                  "Hong Kong": "China, Hong Kong SAR",
+                  "Taiwan*": "China, Taiwan Province of China",
+                  "New Zealand": "Australia/New Zealand",
+                  "Tanzania": "United Republic of Tanzania",
+                  "Syria": "Syrian Arab Republic",
+                  "Korea, South": "Republic of Korea",
+                  "Vietnam": "Viet Nam"}
 
     if country not in d_un_names:
         return country
@@ -231,10 +261,15 @@ def append_date( frame, date ):
 
     return frame
 
+def remove_bignum_format( num ):
+    if type(num) == str:
+        num = num.replace(",", "")
+    return float(num)
+
 def append_eco( frame, economy ): 
     latest_eco = economy["GDP"][ economy["GDP"]["series"] == "GDP per capita (US dollars)"]
     latest_eco = latest_eco[ latest_eco["year"] == latest_eco["year"].max()]
-    frame["GDP"] = check_frame( latest_eco["value"] ).replace(',', '')
+    frame["GDP"] = remove_bignum_format( check_frame( latest_eco["value"] ) )
     
     latest_eco = economy["GVA"][ economy["GVA"]["year"] == economy["GVA"]["year"].max()]
     agriculture = latest_eco[ latest_eco["series"] == "Agriculture, hunting, forestry and fishing (% of gross value added)"]

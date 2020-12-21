@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from OrganizeFrames import organize_covid_frame
+from OrganizeFrames import organize_covid_frame, organize_frame, get_countries
 
 def plot_rates(countries_to_study, time_period, suffix=""):
     day_gap = 7
@@ -63,6 +63,49 @@ def plot_rates(countries_to_study, time_period, suffix=""):
     plots["deaths"].figure.savefig("deaths"+suffix)
     plt.close()
 
+def plot_rates_by_gdp(countries_to_study, days_ago=7, suffix=""):
+    PU = 1E3 # population units are in thousands
+    #country = args.country
+    country = "US"
+    stats = {"GDP":[], "deaths":[], "DPC":[]}
+    populations = {}
+    frame_results = {}
+    for country in countries_to_study:
+        print ("Now Running Country: " + country)
+        frame = organize_frame(country, days_ago, by="country")
+        if country not in populations:
+            populations[country] = frame['PopTotal']
+        cur_deaths = frame['Deaths'].sum() 
+        stats["GDP"].append( frame["GDP"] )
+        # GDP already in per capita! May add more metrics in the future
+        # stats["GDPPC"].append( frame["GDP"]/(populations[country]/1000.0) )
+        stats["deaths"].append( cur_deaths )            
+        stats["DPC"].append( cur_deaths/(populations[country]/1000.0) )
+
+    frame_results = pd.DataFrame(data=stats, index=countries_to_study)
+    #frame_results = frame_results["DPC"].iloc[::-1]
+    print (frame_results)
+
+    plots = {}
+    plots["per_capita"] = sns.lmplot(x="GDP", y="DPC", data=frame_results)
+    #plots["per_capita"].set_xlim(time_period, 0)
+    #plots["per_capita"].grid(True)
+    plots["per_capita"].set(title='', xlabel="GDP/pop [USD]", ylabel="deaths/pop")
+    #plots["deaths"].plot()
+    plots["per_capita"].savefig("GDP_vs_deaths_percapita"+suffix)
+    plt.close()
+   
+
+    plots["total"] = sns.lmplot(x="GDP", y="deaths", data=frame_results)
+    #plots["per_capita"].set_xlim(time_period, 0)
+    #plots["total"].grid(True)
+    plots["total"].set(title='', xlabel="GDP [USD]", ylabel="deaths")
+    #plots["deaths"].plot()
+    plots["total"].savefig("GDP_vs_deaths"+suffix)
+    plt.close()
+
+
+
 #######################################
 ### Main code starts here #############
 #######################################
@@ -70,8 +113,20 @@ def plot_rates(countries_to_study, time_period, suffix=""):
 random_mix = ["US", "Germany", "France", "Italy", "India", "Brazil", "Japan", "Canada", "Mexico", "Thailand"]
 top_gdppc = ["Switzerland", "Ireland", "Norway", "US", "Singapore", "Denmark", "Australia", "Netherlands", "Sweden", "Austria", "Finland", "Germany"]
 friends = ["Finland", "Georgia", "Italy", "US", "Switzerland"]
+time_period = 180 #days 
 
-plot_rates(random_mix, 180, suffix="")
-plot_rates(top_gdppc, 180, suffix="topgdp")
-plot_rates(friends, 180, suffix="friends")
+#plot_rates(random_mix, time_period, suffix="")
+#plot_rates(top_gdppc, time_period, suffix="topgdp")
+#plot_rates(friends, time_period, suffix="friends")
+
+countries = get_countries( population = 1E4, c_type = "countries" )
+countries = '''["'''+'''", "'''.join(countries)+'''"]'''
+
+almost_all_countries = ["Afghanistan", "Algeria", "Angola", "Argentina",  "Australia", "New Zealand", "Austria", "Azerbaijan", "Bangladesh", "Belarus", "Belgium", "Benin", "Brazil", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Canada", "Chad", "Chile", "China", "Taiwan*", "Colombia", "Cuba", "Czechia", "Cote d'Ivoire", "Dominican Republic", "Ecuador", "Egypt", "Equatorial Guinea", "Eritrea", "Ethiopia", "France", "Gabon", "Gambia", "Germany", "Ghana", "Greece", "Guatemala", "Guinea", "Guinea-Bissau", "Haiti", "Honduras", "Hungary", "India", "Indonesia", "Iraq", "Israel", "Italy", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kyrgyzstan", "Liberia", "Libya", "Madagascar", "Malawi", "Malaysia", "Mali", "Mauritania", "Mexico", "Morocco", "Mozambique", "Namibia", "Nepal", "Netherlands", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman", "Pakistan", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Korea, South", "Romania", "Rwanda", "Saudi Arabia", "Senegal", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Sweden", "Switzerland", "Syria", "Tajikistan", "Thailand", "Togo", "Tunisia", "Turkey", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "Tanzania", "US", "Uzbekistan", "Vietnam", "Yemen", "Zambia", "Zimbabwe"]
+
+
+#plot_rates_by_gdp(random_mix)
+
+plot_rates_by_gdp(almost_all_countries)
+
 

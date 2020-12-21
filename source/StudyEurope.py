@@ -21,7 +21,7 @@ for country in countries_to_study:
 frames = pd.DataFrame(frames)
 
 # Append any other fields that may be predictive here
-frames["GDPPerCapita"] = frames.apply(lambda row: float(row.GDP)/row.PopTotal, axis=1)
+frames["GDPPerCapita"] = frames.apply(lambda row: row.GDP/row.PopTotal, axis=1)
 
 # Append on deaths per capita
 frames["DeathsPerCapita"] = frames.apply(lambda row: row.Deaths/row.PopTotal, axis=1)
