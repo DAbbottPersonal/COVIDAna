@@ -8,7 +8,6 @@ from PlotFrames import label_points, plot_rates_by_gdp
 
 random_mix = ["US", "Germany", "France", "Italy", "India", "Brazil", "Japan", "Canada", "Mexico", "Thailand"]
 top_gdppc = ["Switzerland", "Ireland", "Norway", "US", "Singapore", "Denmark", "Australia", "Netherlands", "Sweden", "Austria", "Finland", "Germany"]
-friends = ["Finland", "Georgia", "Italy", "US", "Switzerland"]
 time_period = 180 #days 
 
 #plot_rates(random_mix, time_period, suffix="")
