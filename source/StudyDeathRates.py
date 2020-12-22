@@ -2,7 +2,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-from OrganizeFrames import organize_covid_frame, organize_frame, get_countries
+from OrganizeFrames import date_as_str, organize_covid_frame, organize_frame, get_countries
+
+def label_points(x, y, val, ax):
+    a = pd.concat({'x': x, 'y': y, 'val': val}, axis=1)
+    for i, point in a.iterrows():
+        ax.text(point['x']+.03, point['y'], str(point['val']))
 
 def plot_rates(countries_to_study, time_period, suffix=""):
     day_gap = 7
@@ -65,11 +70,14 @@ def plot_rates(countries_to_study, time_period, suffix=""):
 
 def plot_rates_by_gdp(countries_to_study, days_ago=7, suffix=""):
     PU = 1E3 # population units are in thousands
+    today = date_as_str(day="today", style="EU" )
     #country = args.country
     country = "US"
     stats = {"GDP":[], "deaths":[], "DPC":[]}
     populations = {}
     frame_results = {}
+    if suffix != "":
+        suffix = "_"+suffix
     for country in countries_to_study:
         print ("Now Running Country: " + country)
         frame = organize_frame(country, days_ago, by="country")
@@ -90,8 +98,9 @@ def plot_rates_by_gdp(countries_to_study, days_ago=7, suffix=""):
     plots["per_capita"] = sns.lmplot(x="GDP", y="DPC", data=frame_results)
     #plots["per_capita"].set_xlim(time_period, 0)
     #plots["per_capita"].grid(True)
-    plots["per_capita"].set(title='', xlabel="GDP/pop [USD]", ylabel="deaths/pop")
+    plots["per_capita"].set(title=today, xlabel="GDP/population [USD]", ylabel="total COVID deaths/population")
     #plots["deaths"].plot()
+    label_points( frame_results["GDP"], frame_results["DPC"], frame_results.index.to_series(), plt.gca()) 
     plots["per_capita"].savefig("GDP_vs_deaths_percapita"+suffix)
     plt.close()
    
@@ -99,8 +108,9 @@ def plot_rates_by_gdp(countries_to_study, days_ago=7, suffix=""):
     plots["total"] = sns.lmplot(x="GDP", y="deaths", data=frame_results)
     #plots["per_capita"].set_xlim(time_period, 0)
     #plots["total"].grid(True)
-    plots["total"].set(title='', xlabel="GDP [USD]", ylabel="deaths")
+    plots["total"].set(title=today, xlabel="GDP [USD]", ylabel="deaths")
     #plots["deaths"].plot()
+    label_points( frame_results["GDP"], frame_results["deaths"], frame_results.index.to_series(), plt.gca()) 
     plots["total"].savefig("GDP_vs_deaths"+suffix)
     plt.close()
 
@@ -124,9 +134,12 @@ countries = '''["'''+'''", "'''.join(countries)+'''"]'''
 
 almost_all_countries = ["Afghanistan", "Algeria", "Angola", "Argentina",  "Australia", "New Zealand", "Austria", "Azerbaijan", "Bangladesh", "Belarus", "Belgium", "Benin", "Brazil", "Burkina Faso", "Burundi", "Cambodia", "Cameroon", "Canada", "Chad", "Chile", "China", "Taiwan*", "Colombia", "Cuba", "Czechia", "Cote d'Ivoire", "Dominican Republic", "Ecuador", "Egypt", "Equatorial Guinea", "Eritrea", "Ethiopia", "France", "Gabon", "Gambia", "Germany", "Ghana", "Greece", "Guatemala", "Guinea", "Guinea-Bissau", "Haiti", "Honduras", "Hungary", "India", "Indonesia", "Iraq", "Israel", "Italy", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kyrgyzstan", "Liberia", "Libya", "Madagascar", "Malawi", "Malaysia", "Mali", "Mauritania", "Mexico", "Morocco", "Mozambique", "Namibia", "Nepal", "Netherlands", "Nicaragua", "Niger", "Nigeria", "Norway", "Oman", "Pakistan", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Korea, South", "Romania", "Rwanda", "Saudi Arabia", "Senegal", "Sierra Leone", "Somalia", "South Africa", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Sweden", "Switzerland", "Syria", "Tajikistan", "Thailand", "Togo", "Tunisia", "Turkey", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "Tanzania", "US", "Uzbekistan", "Vietnam", "Yemen", "Zambia", "Zimbabwe"]
 
+eu_countries = ["Austria", "Belgium", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia", "Finland", "France", "Germany", "Greece", "Hungary", "Ireland", "Italy", "Latvia", "Lithuania", "Luxembourg", "Malta", "Netherlands", "Poland", "Portugal", "Romania", "Slovakia", "Slovenia", "Spain", "Sweden"]
+
 
 #plot_rates_by_gdp(random_mix)
 
 plot_rates_by_gdp(almost_all_countries)
 
+plot_rates_by_gdp(eu_countries, suffix="eu")
 

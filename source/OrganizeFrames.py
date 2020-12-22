@@ -193,14 +193,18 @@ def convert_UN_name( country ):
 
 # Default is "today", which is really yesterday as the data collection lags a day.
 # Otherwise, it is how many days ago.
-def date_as_str ( day = "today" ):
+def date_as_str ( day = "today" , style = "US" ):
     t_date = date.today()-timedelta(days=1)
     if day == "today":
+        if style == "EU":
+            return t_date.strftime('%d-%B-%Y')
         return t_date.strftime('%m-%d-%Y')    
     elif day < 1:
         print ("Error, minimum day should be 1 or more. Returning None!")
         return None
     t_date = date.today()-timedelta(days=day)
+    if style == "EU":
+        return t_date.strftime('%d-%B-%Y')
     return t_date.strftime('%m-%d-%Y')
 
 def date_as_date ( day = "today" ):
