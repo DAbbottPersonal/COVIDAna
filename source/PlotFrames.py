@@ -6,6 +6,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+from datetime import date, datetime, timedelta
+from OrganizeFrames import date_as_str, organize_covid_frame, organize_frame, get_countries, find_latest_date
+from os import listdir
+from scipy import optimize as opt
+
 def label_points(x, y, val, ax):
     a = pd.concat({'x': x, 'y': y, 'val': val}, axis=1)
     for i, point in a.iterrows():
@@ -115,5 +120,75 @@ def plot_rates_by_gdp(countries_to_study, days_ago=7, suffix=""):
     label_points( frame_results["GDP"], frame_results["deaths"], frame_results.index.to_series(), plt.gca()) 
     plots["total"].savefig("GDP_vs_deaths"+suffix)
     plt.close()
+
+def plot_latest_trend(countries_to_study, suffix=""):
+    data_path = '../data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/'
+    cov_dates = set(listdir(data_path))
+    latest_date = find_latest_date(cov_dates) 
+    day_gap = (date.today() - latest_date).days
+    # Typically, COVID is a 2 week period so use that trend window.
+    time_period = 14
+    PU = 1E3 # population units are in thousands
+    #country = args.country
+    country = "US"
+    deaths = {"deaths":{}, "DPC":{}}
+    populations = {}
+    frame_results = {}
+    for country in countries_to_study:
+        #deaths[country] = {"deaths":[], "DPC":[]}
+        deaths["deaths"][country] = []
+        deaths["DPC"][country]    = []
+        for day in range(day_gap, day_gap+time_period):
+            frame = organize_covid_frame(country, day, by="country")
+            if country not in populations:
+                populations[country] = frame['PopTotal']
+            cur_deaths = frame['Deaths'].sum() 
+            deaths["deaths"][country].append( cur_deaths )            
+            deaths["DPC"][country].append( cur_deaths/(populations[country]/1000.0) )
+    
+    def func(x, a, b, c, d):
+        return (a + b*x + c*x*x + d*x*x*x)
+
+    time_period_x = range(-1*time_period, 0, 1)
+    popt, pcov = opt.curve_fit(func, time_period_x, deaths["DPC"]["US"], bounds=([-1,-1,-1,-1],[1,1,1,1]))
+
+    plot_period_x = range(-1*time_period, 7, 1)
+    plt.plot(plot_period_x, func(plot_period_x, *popt), 'g--', label='fit plot')
+    plt.plot(time_period_x, deaths["DPC"]["US"], 'b-', label='Data')
+    plt.show()
+    
+
+    #frame_results["DPC"] = pd.DataFrame(data=deaths["DPC"])
+    #frame_results["DPC"] = frame_results["DPC"].iloc[::-1]
+
+    #frame_results["deaths"] = pd.DataFrame(data=deaths["deaths"])
+    #frame_results["deaths"] = frame_results["deaths"].iloc[::-1]
+
+
+
+    # Append on deaths per capita
+    #frames["DeathsPerCapita"] = frames.apply(lambda row: row.Deaths/row.PopTotal, axis=1)
+    #average_DeathsPerCapita   = frames["DeathsPerCapita"].agg("mean")
+
+    #if suffix == "":
+    #    suffix = ".png"
+    #else:
+    #    suffix = ''.join(["_",suffix,".png"])
+    #plots = {}
+    #plots["DPC"] = sns.regplot(data=frame_results["DPC"])
+    #plots["DPC"].set_xlim(time_period, 0)
+    #plots["DPC"].grid(True)
+    #plots["DPC"].set(title='Deaths Per Capita', xlabel="Time [days]", ylabel="Deaths/Capita x1E3")
+    #plots["DPC"].figure.savefig("deaths_per_capita"+suffix)
+    #plt.close()
+
+    #plots["deaths"] = sns.regplot(data=frame_results["deaths"])
+    #plots["deaths"].set_xlim(time_period, 0)
+    #plots["deaths"].grid(True)
+    #plots["deaths"].set(title='Total Deaths', xlabel="Time [days]", ylabel="Deaths")
+    #plots["deaths"].figure.savefig("deaths"+suffix)
+    #plt.close()
+
+   
 
 
