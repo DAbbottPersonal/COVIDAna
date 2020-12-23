@@ -23,4 +23,4 @@ time_period = 180 #days
 #plot_rates_by_gdp(countries["all_countries"])
 #plot_rates_by_gdp(countries["eu_countries"], suffix="eu")
 
-plot_latest_trend(["US"], suffix="test")
+plot_latest_trend(random_mix, suffix="test")

@@ -2,11 +2,13 @@
 ### Common plotting scripts ###########
 #######################################
 
-import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 
 from datetime import date, datetime, timedelta
+from itertools import cycle
 from OrganizeFrames import date_as_str, organize_covid_frame, organize_frame, get_countries, find_latest_date
 from os import listdir
 from scipy import optimize as opt
@@ -122,23 +124,29 @@ def plot_rates_by_gdp(countries_to_study, days_ago=7, suffix=""):
     plt.close()
 
 def plot_latest_trend(countries_to_study, suffix=""):
+    def func(x, a, b, c, d):
+        return (a + b*x + c*np.exp(d*x))
+    colors = color_dict(countries_to_study)
     data_path = '../data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/'
     cov_dates = set(listdir(data_path))
     latest_date = find_latest_date(cov_dates) 
     day_gap = (date.today() - latest_date).days
     # Typically, COVID is a 2 week period so use that trend window.
     time_period = 14
+    extrap_days = 10
     PU = 1E3 # population units are in thousands
     #country = args.country
     country = "US"
     deaths = {"deaths":{}, "DPC":{}}
     populations = {}
     frame_results = {}
+    if suffix != "":
+        suffix = "_"+suffix
     for country in countries_to_study:
         #deaths[country] = {"deaths":[], "DPC":[]}
         deaths["deaths"][country] = []
         deaths["DPC"][country]    = []
-        for day in range(day_gap, day_gap+time_period):
+        for day in range(day_gap+time_period, day_gap, -1):
             frame = organize_covid_frame(country, day, by="country")
             if country not in populations:
                 populations[country] = frame['PopTotal']
@@ -146,17 +154,22 @@ def plot_latest_trend(countries_to_study, suffix=""):
             deaths["deaths"][country].append( cur_deaths )            
             deaths["DPC"][country].append( cur_deaths/(populations[country]/1000.0) )
     
-    def func(x, a, b, c, d):
-        return (a + b*x + c*x*x + d*x*x*x)
-
-    time_period_x = range(-1*time_period, 0, 1)
-    popt, pcov = opt.curve_fit(func, time_period_x, deaths["DPC"]["US"], bounds=([-1,-1,-1,-1],[1,1,1,1]))
-
-    plot_period_x = range(-1*time_period, 7, 1)
-    plt.plot(plot_period_x, func(plot_period_x, *popt), 'g--', label='fit plot')
-    plt.plot(time_period_x, deaths["DPC"]["US"], 'b-', label='Data')
+        time_period_x = range(-1*time_period, 0, 1)
+        try:
+            # Try with an exponential first
+            popt, pcov = opt.curve_fit(func, time_period_x, deaths["DPC"][country], bounds=([-10,-1,-10,-2],[10,1,10,2]))
+        except RuntimeError:
+            # Drop the exponential, virtually to zero and refit the curve
+            popt, pcov = opt.curve_fit(func, time_period_x, deaths["DPC"][country], bounds=([-10,-1,-0.001,-0.001],[10,1,0.001,0.001]))
+ 
+        plot_period_x = range(-1*time_period, extrap_days, 1)
+        plt.plot(plot_period_x, func(plot_period_x, *popt), color=colors[country]['nom'], linestyle='--')
+        plt.plot(time_period_x, deaths["DPC"][country], color=colors[country]['nom'], linestyle='-', label=(country))
+    plt.legend()
+    plt.xlim([-1*time_period, extrap_days+7])
+    plt.savefig("week_projection"+suffix)
     plt.show()
-    
+    plt.close() 
 
     #frame_results["DPC"] = pd.DataFrame(data=deaths["DPC"])
     #frame_results["DPC"] = frame_results["DPC"].iloc[::-1]
@@ -190,5 +203,35 @@ def plot_latest_trend(countries_to_study, suffix=""):
     #plt.close()
 
    
+def color_dict(countries):
+    colors = []
+    colors.append({'nom':'black','var':'dimgray'})
+    colors.append({'nom':'darkred','var':'brown'})
+    colors.append({'nom':'red','var':'lightcoral'})
+    colors.append({'nom':'darkorange','var':'orange'}) 
+    colors.append({'nom':'goldenrod','var':'gold'}) 
+    colors.append({'nom':'olive','var':'yellowgreen'}) 
+    colors.append({'nom':'limegreen','var':'lime'}) 
+    colors.append({'nom':'turquoise','var':'aquamarine'}) 
+    colors.append({'nom':'steelblue','var':'lightslateblue'}) 
+    colors.append({'nom':'navy','var':'blue'}) 
+    colors.append({'nom':'rebeccapurple','var':'mediumpurple'}) 
+    colors.append({'nom':'darkviolet','var':'mediumorchid'}) 
+    colors.append({'nom':'indigo','var':'purple'}) 
+    colors.append({'nom':'deeppink','var':'hotpink'}) 
+    colors.append({'nom':'saddlebrown','var':'sandybrown'}) 
+    colors.append({'nom':'darkgrey','var':'lightgrey'})
+    colors.append({'nom':'black','var':'dimgray'}) 
+    # Use a cycle in case we run out of colors, loop back around.
+    colors = cycle(colors)
+
+    country_colors = {}
+    c_iter = 0
+    for color in colors:
+        country_colors[countries[c_iter]] = color
+        if (countries[c_iter] == countries[len(countries)-1]):
+            break
+        c_iter+=1
+    return country_colors
 
 
