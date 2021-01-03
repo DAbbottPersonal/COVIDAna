@@ -124,8 +124,9 @@ def plot_rates_by_gdp(countries_to_study, days_ago=7, suffix=""):
     plt.close()
 
 def plot_latest_trend(countries_to_study, suffix=""):
-    def func(x, a, b, c, d):
-        return (a + b*x + c*np.exp(d*x))
+    def func(x, a, b, c, d, e):
+        #return (a + b*x + c*np.exp(d*x)) 
+        return (a + b*x + c*x*x + d*np.exp(e*x))
     colors = color_dict(countries_to_study)
     data_path = '../data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/'
     cov_dates = set(listdir(data_path))
@@ -155,20 +156,23 @@ def plot_latest_trend(countries_to_study, suffix=""):
             deaths["DPC"][country].append( cur_deaths/(populations[country]/1000.0) )
     
         time_period_x = range(-1*time_period, 0, 1)
+        print ("Fitting country " + country)
         try:
             # Try with an exponential first
-            popt, pcov = opt.curve_fit(func, time_period_x, deaths["DPC"][country], bounds=([-10,-1,-10,-2],[10,1,10,2]))
+            popt, pcov = opt.curve_fit(func, time_period_x, deaths["DPC"][country], bounds=([-10,-10,-10,-10,-10],[10,10,10,10,10]))
+            print (popt)
         except RuntimeError:
             # Drop the exponential, virtually to zero and refit the curve
-            popt, pcov = opt.curve_fit(func, time_period_x, deaths["DPC"][country], bounds=([-10,-1,-0.001,-0.001],[10,1,0.001,0.001]))
- 
+            popt, pcov = opt.curve_fit(func, time_period_x, deaths["DPC"][country], bounds=([-10,-1,-0.001,-0.001,-0.001],[10,1,0.001,0.001,0.001]))
+            print ("Exception in fitting...")
+            print (popt)
+
         plot_period_x = range(-1*time_period, extrap_days, 1)
         plt.plot(plot_period_x, func(plot_period_x, *popt), color=colors[country]['nom'], linestyle='--')
         plt.plot(time_period_x, deaths["DPC"][country], color=colors[country]['nom'], linestyle='-', label=(country))
     plt.legend()
     plt.xlim([-1*time_period, extrap_days+7])
     plt.savefig("week_projection"+suffix)
-    plt.show()
     plt.close() 
 
     #frame_results["DPC"] = pd.DataFrame(data=deaths["DPC"])
