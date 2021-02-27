@@ -1,8 +1,13 @@
+'''
+Basic script to plot death rates for a country
+for a given time period.
+'''
+
 import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from OrganizeFrames import organize_frame
+from organize_frames import organize_frame
 from datetime import date, datetime, timedelta
 from scipy.interpolate import BSpline
 

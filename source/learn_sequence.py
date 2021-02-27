@@ -1,4 +1,4 @@
-from OrganizeFrames import organize_frame
+from organize_frames import organize_frame
 
 days_to_analyse = 60
 days_buffered   = 3

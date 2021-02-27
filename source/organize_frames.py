@@ -1,9 +1,15 @@
-import os
+'''
+This file contains the modules responsible for organizing the country data
+to be used by other files, for analysis purposes.
+The backend data gets organized here!
+'''
+
 import argparse
 import numpy as np
+import matplotlib.pyplot as plt
+import os
 import pandas as pd
 from datetime import date, datetime, timedelta
-import matplotlib.pyplot as plt
 
 def organize_frame ( country='US', day='today', by = "" ):
     data_path = '../data/COVID-19/csse_covid_19_data/csse_covid_19_daily_reports/'

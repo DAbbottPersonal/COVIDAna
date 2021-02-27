@@ -1,11 +1,16 @@
+'''
+Analysis of country death rates and country details.
+Linear regression testing, validating, visualizing, etc. done here.
+'''
+
 import pandas as pd
 import eli5
 
 from eli5.sklearn import PermutationImportance
+from organize_frames import organize_frame
 from sklearn.metrics import mean_absolute_error
 from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
-from OrganizeFrames import organize_frame
 
 days_back = 3
 

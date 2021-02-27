@@ -1,4 +1,8 @@
-from OrganizeFrames import organize_frame
+'''
+Some simple functionality tests here.
+'''
+
+from organize_frames import organize_frame
 
 frame = organize_frame("US", by="country")
 print (frame)

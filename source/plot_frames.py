@@ -1,6 +1,6 @@
-#######################################
-### Common plotting scripts ###########
-#######################################
+'''
+Common plotting scripts.
+'''
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -9,7 +9,7 @@ import seaborn as sns
 
 from datetime import date, datetime, timedelta
 from itertools import cycle
-from OrganizeFrames import date_as_str, organize_covid_frame, organize_frame, get_countries, find_latest_date
+from organize_frames import date_as_str, organize_covid_frame, organize_frame, get_countries, find_latest_date
 from os import listdir
 from scipy import optimize as opt
 

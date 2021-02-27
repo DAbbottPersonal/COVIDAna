@@ -1,5 +1,9 @@
+'''
+Script to steer advanced plotting of death rates for countries.
+'''
+
 from json import load
-from PlotFrames import label_points, plot_rates, plot_rates_by_gdp, plot_latest_trend
+from plot_frames import label_points, plot_rates, plot_rates_by_gdp, plot_latest_trend
 
 
 #######################################
